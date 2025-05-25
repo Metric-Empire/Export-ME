@@ -1,6 +1,6 @@
 [project]
 name = "Export-ME"
-version = "0.1.0"
+version = "1.0.0"
 description = "Metric Empire Blender Addon"
 authors = [{ name = "Metric Empire", email = "hello@metricempire.com" }]
 dependencies = ["toml>=0.10.2", "fake-bpy-module-latest>=20241217"]
