@@ -1,4 +1,4 @@
-name: Ubuntu Release
+name: Add-on Release
 
 on:
   push:
@@ -10,7 +10,6 @@ on:
         description: "Specific tag name"
         required: true
         type: string
-
 jobs:
   build:
     runs-on: ubuntu-24.04
