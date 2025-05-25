@@ -53,5 +53,6 @@ if __name__ == "__main__":
     dir_to_zip = Path("./source")
     export_dir = Path("./dist")
     version = get_version()
-    zip_files(dir_to_zip, f"Export-ME-{version}.zip", export_dir)
-    print("Created .zip")
+    name = f"Export-ME-{version}.zip"
+    zip_files(dir_to_zip, name, export_dir)
+    print(f"Created {name} in {export_dir}")
