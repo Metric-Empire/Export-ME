@@ -251,7 +251,6 @@ class RemoveCustomPathOperator(bpy.types.Operator):
 classes = (
     N_PT_Panel,
     N_PT_material,
-    N_PT_Viewport,
     N_PT_Tools,
     N_OT_bat_export,
     N_OT_OpenFolder,
