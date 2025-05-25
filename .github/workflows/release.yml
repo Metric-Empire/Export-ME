@@ -14,19 +14,17 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     env:
-      RELEASE_VERSION: ${{ github.event.inputs.tag != '' && github.event.inputs.tag || github.ref_name }}
+      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Setup Python
-        uses: actions/setup-python@v5.0.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Build
         run: |
-          echo "Venv setup"
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
           python3 -m venv .venv
           source ./.venv/bin/activate
           echo "Building add-on"
