@@ -13,9 +13,7 @@ class N_OT_SmartDecal_Op(Operator):
 
         for selected_obj in selected_objs:
             # get all child objects starting with "ME"
-            child_objs = [
-                obj for obj in selected_obj.children if obj.name.startswith("ME")
-            ]
+            child_objs = [obj for obj in selected_obj.children if obj.name.startswith("ME")]
 
             # combine the child objects into a single object
             if len(child_objs) >= 1:
@@ -48,9 +46,7 @@ class N_OT_SmartDecal_Op(Operator):
 
                     new_obj = bpy.context.object
 
-                    bpy.ops.object.transform_apply(
-                        location=True, rotation=True, scale=True
-                    )
+                    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
                     small_material_name = material_name.lstrip("ME_")
 

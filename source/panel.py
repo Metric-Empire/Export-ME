@@ -1,7 +1,6 @@
 import bpy
 from bpy.types import Panel
 from . import __package__ as base_package
-from pyme.getset import get_project_path
 
 from pathlib import Path
 
@@ -15,7 +14,7 @@ class N_PT_Panel(Panel):
     # bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
-        project_name = get_project_path().name
+        project_name = ""
         prefs = context.preferences.addons[base_package].preferences
 
         def hasMultipleUVSets(obj):

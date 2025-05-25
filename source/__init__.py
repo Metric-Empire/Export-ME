@@ -11,7 +11,6 @@ from .smart_decal_apply_ot import *
 
 from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, IntProperty
 from bpy.types import PropertyGroup
-from pyme.getset import get_project_path
 
 
 bpy.types.Scene.export_folder = StringProperty(
@@ -107,8 +106,8 @@ bpy.types.Scene.rand_z = BoolProperty(name="Z Random Rotation", default=True, de
 
 
 class N_GlobalProperties:
-    path = get_project_path()
-    project_name = get_project_path().name
+    path = ""
+    project_name = ""
 
 
 class CustomProjectPath(PropertyGroup):

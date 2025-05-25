@@ -5,7 +5,6 @@ from .utils import (
     get_subpath_prefs,
 )
 from bpy.props import StringProperty, IntProperty
-from pyme.getset import get_project_path
 from pathlib import Path
 
 
@@ -15,7 +14,8 @@ class N_OT_SetProjectPath(Operator):
     bl_description = "Set the appdata project path"
 
     def execute(self, context):
-        project_path = get_project_path()
+        # TODO: add new project path form settings
+        project_path = ""
         print(project_path)
         sub_path = get_subpath_prefs(context)
         print(sub_path)
