@@ -106,6 +106,7 @@ bpy.types.Scene.rand_z = BoolProperty(name="Z Random Rotation", default=True, de
 
 
 class N_GlobalProperties:
+    # TODO: Implementation of the addon API for project management
     path = ""
     project_name = ""
 
