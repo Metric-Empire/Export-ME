@@ -4,10 +4,18 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Specific tag name"
+        required: true
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-24.04
+    env:
+      RELEASE_VERSION: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
