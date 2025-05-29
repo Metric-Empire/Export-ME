@@ -1,6 +1,10 @@
 import bpy
 import os
 
+from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, IntProperty
+from bpy.types import PropertyGroup
+from pathlib import Path
+
 from .panel import *
 from .bat_export_ot import *
 from .folder_ot import *
@@ -8,9 +12,7 @@ from .remove_ot import *
 from .tools_ot import *
 from .project_path_ot import *
 from .smart_decal_apply_ot import *
-
-from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, IntProperty
-from bpy.types import PropertyGroup
+from .icon_selector import *
 
 
 bpy.types.Scene.export_folder = StringProperty(
@@ -121,6 +123,11 @@ class CustomProjectPath(PropertyGroup):
         name="",
         description="Name of the project associated with this path",
     )
+    icon: StringProperty(  # type: ignore
+        name="Icon",
+        description="Icon to display for this project path",
+        default="BLENDER",
+    )
 
 
 class N_Preferences(bpy.types.AddonPreferences, N_GlobalProperties):
@@ -139,7 +146,7 @@ class N_Preferences(bpy.types.AddonPreferences, N_GlobalProperties):
         name="Project Subpath",
         subtype="FILE_PATH",
         description="Subpath to the FBX folder",
-        default="Content\\_GraphicBank\\Asset\\Mesh",
+        default=str(Path("Content/_GraphicBank/Asset/Mesh")),
     )
 
     material_panel_enable: BoolProperty(  # type: ignore
@@ -173,7 +180,10 @@ class N_Preferences(bpy.types.AddonPreferences, N_GlobalProperties):
             row = box.row()
             row.prop(custom_path, "filepath", text=f"Project Path {index + 1}")
             row = box.row()
-            # Add a button to remove the path if it's not the first path
+            row.prop(custom_path, "icon", text="Icon")
+            row = box.row()
+            row.operator("iv.icons_show", text="Browse Icons")
+
             row.operator("preferences.remove_custom_path", text="Remove", icon="X").index = index
 
         if N_GlobalProperties.path != "":
@@ -213,18 +223,27 @@ class N_Preferences(bpy.types.AddonPreferences, N_GlobalProperties):
         row = box.row()
         row.prop(self, "tool_panel_enable")
 
-        col = layout.column(align=True)
-        col.label(text="Utility:")
 
-        box = layout.box()
-        row = box.row()
-        row.operator("wm.download_addons", text="Download Extensions")
-        row = box.row()
-        row.operator("wm.add_library_folder", text="Set Asset Libraries")
-        row = box.row()
-        row.operator("wm.set_theme", text="Set Theme Utility")
-        row = box.row()
-        row.operator("wm.open_set_me_up", text="Open Set ME Up")
+class N_OT_SelectAndApplyIcon(bpy.types.Operator):
+    bl_idname = "preferences.select_and_apply_icon"
+    bl_label = "Select Icon"
+
+    index: IntProperty()  # type: ignore
+
+    def execute(self, context):
+        # First show the icon selector
+        bpy.ops.iv.icons_show()
+
+        # Get the clipboard content (where iv.icons_show puts the selected icon name)
+        clipboard = context.window_manager.clipboard
+
+        # Update the icon property if the clipboard contains valid data
+        if clipboard:
+            prefs = context.preferences.addons[__package__].preferences
+            if self.index < len(prefs.custom_project_paths):
+                prefs.custom_project_paths[self.index].icon = clipboard
+
+        return {"FINISHED"}
 
 
 # Operator to add a new custom path
@@ -275,6 +294,7 @@ classes = (
     N_Preferences,
     AddCustomPathOperator,
     RemoveCustomPathOperator,
+    N_OT_icons_show,
 )
 
 
