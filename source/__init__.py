@@ -8,7 +8,6 @@ from pathlib import Path
 from .panel import *
 from .bat_export_ot import *
 from .folder_ot import *
-from .remove_ot import *
 from .tools_ot import *
 from .project_path_ot import *
 from .smart_decal_apply_ot import *
@@ -88,23 +87,12 @@ bpy.types.Scene.fix_collider = BoolProperty(
     name="Fix Collider", default=True, description="Fix Collider Name and make sure they are convex"
 )
 
-bpy.types.Scene.specific_uv = StringProperty(
-    name="Specific UV Name",
-    subtype="FILE_NAME",
-    description="Specific UV name to remove for selected objects",
-)
 
 bpy.types.Scene.new_folder_name = StringProperty(
     name="New Folder Name",
     subtype="FILE_NAME",
     description="Create a new folder in the current directory",
 )
-
-bpy.types.Scene.rand_x = BoolProperty(name="X Random Rotation", default=False, description="Add random rotation on X")
-
-bpy.types.Scene.rand_y = BoolProperty(name="Y Random Rotation", default=False, description="Add random rotation on Y")
-
-bpy.types.Scene.rand_z = BoolProperty(name="Z Random Rotation", default=True, description="Add random rotation on Z")
 
 
 class N_GlobalProperties:
@@ -211,18 +199,6 @@ class N_Preferences(bpy.types.AddonPreferences, N_GlobalProperties):
                         icon="ERROR",
                     )
 
-        # Other preferences UI
-        col = layout.column(align=True)
-        col.label(text="Panel Visibility:")
-
-        box = layout.box()
-        row = box.row()
-        row.prop(self, "material_panel_enable")
-        row = box.row()
-        row.prop(self, "viewport_panel_enable")
-        row = box.row()
-        row.prop(self, "tool_panel_enable")
-
 
 class N_OT_SelectAndApplyIcon(bpy.types.Operator):
     bl_idname = "preferences.select_and_apply_icon"
@@ -270,20 +246,9 @@ class RemoveCustomPathOperator(bpy.types.Operator):
 
 classes = (
     N_PT_Panel,
-    N_PT_material,
-    N_PT_Tools,
     N_OT_bat_export,
     N_OT_OpenFolder,
-    N_OT_RemoveMat_All_Op,
-    N_OT_RemoveUV_All_Op,
-    N_OT_RemoveUV_Specific_Op,
-    N_OT_RemoveUV_NonRender_Op,
     N_OT_SmartDecal_Op,
-    N_OT_SetBoxCollider_Op,
-    N_OT_SetSphereCollider_Op,
-    N_OT_SetCylinderCollider_Op,
-    N_OT_SetCapsuleCollider_Op,
-    N_OT_SetConvexCollider_Op,
     N_OT_FixColliderName_Op,
     N_OT_NewFolder,
     N_OT_ParentFolder,
