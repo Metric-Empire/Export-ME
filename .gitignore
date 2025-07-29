@@ -174,3 +174,4 @@ cython_debug/
 .pypirc
 .vscode/*
 pdm.lock
+.github/*.md
