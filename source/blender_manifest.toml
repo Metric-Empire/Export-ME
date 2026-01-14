@@ -1,16 +1,16 @@
 schema_version = "1.0.0"
 id = "export_me"
-version = "1.0.0"
+version = "2.0.0"
 name = "Export ME"
 tagline = "Game FBX Exporter by the Metric Empire Studio"
 maintainer = "Victor Chedeville <victor.ched@gmail.com>"
 type = "add-on"
-website = "https://extensions.blender.org/add-ons/my-example-package/"
+website = "https://github.com/metric-empire/export-me"
 tags = ["Import-Export", "Game Engine", "Pipeline"]
-blender_version_min = "4.2.0"
+blender_version_min = "5.0.0"
 platforms = ["windows-x64"]
 license = ["SPDX:GPL-3.0-or-later"]
-copyright = ["2025 Metric Empire"]
+copyright = ["2026 Metric Empire"]
 
 [permissions]
 files = "Import/export FBX from/to disk"
