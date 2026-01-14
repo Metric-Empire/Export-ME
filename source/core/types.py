@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bpy.types import Scene
 
 
 @dataclass
@@ -19,7 +25,7 @@ class ExportSettings:
     smoothing: str
 
     @classmethod
-    def from_scene(cls, scene) -> "ExportSettings":
+    def from_scene(cls, scene: Scene) -> ExportSettings:
         import bpy
 
         export_folder = scene.export_folder
@@ -45,6 +51,12 @@ class ExportSettings:
         )
 
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bpy.types import PropertyGroup
+
+
 @dataclass
 class ProjectPath:
     filepath: Path
@@ -52,7 +64,7 @@ class ProjectPath:
     icon: str
 
     @classmethod
-    def from_property(cls, prop) -> "ProjectPath":
+    def from_property(cls, prop: PropertyGroup) -> ProjectPath:
         return cls(
             filepath=Path(prop.filepath),
             project_name=prop.project_name,

@@ -1,5 +1,4 @@
-import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context
 from bpy.props import IntProperty
 from pathlib import Path
 
@@ -11,7 +10,7 @@ class N_OT_SetProjectPath(Operator):
     bl_label = "Set Project Path"
     bl_description = "Set the project path from preferences"
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         # Reserved for future project path API implementation
         project_path = Path()
         sub_path = get_subpath(context)
@@ -26,9 +25,9 @@ class N_OT_SetCustomProjectPath(Operator):
     bl_label = "Set Custom Project Path"
     bl_description = "Set export folder from a saved custom project path"
 
-    index: IntProperty(name="Path Index", default=0)  # type: ignore
+    index: IntProperty(name="Path Index", default=0)
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         custom_paths = get_custom_paths(context)
 
         if self.index >= len(custom_paths):

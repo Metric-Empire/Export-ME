@@ -1,7 +1,6 @@
+from typing import Dict, Tuple, Any
 import bpy
-from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, IntProperty
-from bpy.types import PropertyGroup
-from pathlib import Path
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from .ui import N_PT_Panel
 from .operators import (
@@ -16,9 +15,10 @@ from .operators import (
     N_OT_SmartDecal,
     N_OT_IconShow,
 )
+from .core.preferences import PREFERENCE_CLASSES
 
 
-SCENE_PROPERTIES = {
+SCENE_PROPERTIES: Dict[str, Any] = {
     "export_folder": StringProperty(
         name="Export folder",
         subtype="DIR_PATH",
@@ -97,84 +97,8 @@ SCENE_PROPERTIES = {
 }
 
 
-class CustomProjectPath(PropertyGroup):
-    filepath: StringProperty(
-        name="Custom Project Path",
-        subtype="FILE_PATH",
-        description="Project root path",
-    )
-    project_name: StringProperty(
-        name="Project Name",
-        description="Display name for this project",
-    )
-    icon: StringProperty(
-        name="Icon",
-        description="Icon identifier for this project",
-        default="BLENDER",
-    )
-
-
-class ExportMEPreferences(bpy.types.AddonPreferences):
-    bl_idname = __package__
-
-    custom_project_paths: CollectionProperty(type=CustomProjectPath)
-
-    use_project: BoolProperty(
-        name="Use Project Path",
-        description="Use the project path for FBX export",
-        default=True,
-    )
-
-    project_subpath: StringProperty(
-        name="Project Subpath",
-        subtype="FILE_PATH",
-        description="Subpath to the FBX folder within project",
-        default="Content/_GraphicBank/Asset/Mesh",
-    )
-
-    def draw(self, context):
-        layout = self.layout
-
-        layout.label(text="Project Paths:")
-        layout.operator("preferences.add_custom_path", text="Add New Path", icon="ADD")
-
-        for index, path in enumerate(self.custom_project_paths):
-            box = layout.box()
-            box.prop(path, "project_name", text="Name")
-            box.prop(path, "filepath", text="Path")
-
-            row = box.row()
-            row.prop(path, "icon", text="Icon")
-            row.operator("iv.icons_show", text="Browse")
-            row.operator("preferences.remove_custom_path", text="", icon="X").index = index
-
-
-class N_OT_AddCustomPath(bpy.types.Operator):
-    bl_idname = "preferences.add_custom_path"
-    bl_label = "Add Custom Path"
-
-    def execute(self, context):
-        context.preferences.addons[__package__].preferences.custom_project_paths.add()
-        return {"FINISHED"}
-
-
-class N_OT_RemoveCustomPath(bpy.types.Operator):
-    bl_idname = "preferences.remove_custom_path"
-    bl_label = "Remove Custom Path"
-
-    index: IntProperty()
-
-    def execute(self, context):
-        prefs = context.preferences.addons[__package__].preferences
-        prefs.custom_project_paths.remove(self.index)
-        return {"FINISHED"}
-
-
-CLASSES = (
-    CustomProjectPath,
-    ExportMEPreferences,
-    N_OT_AddCustomPath,
-    N_OT_RemoveCustomPath,
+CLASSES: Tuple[type, ...] = (
+    *PREFERENCE_CLASSES,
     N_PT_Panel,
     N_OT_BatchExport,
     N_OT_OpenFolder,
@@ -189,7 +113,7 @@ CLASSES = (
 )
 
 
-def register():
+def register() -> None:
     for cls in CLASSES:
         bpy.utils.register_class(cls)
 
@@ -197,7 +121,7 @@ def register():
         setattr(bpy.types.Scene, name, prop)
 
 
-def unregister():
+def unregister() -> None:
     for name in SCENE_PROPERTIES:
         delattr(bpy.types.Scene, name)
 

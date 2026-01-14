@@ -1,10 +1,12 @@
+from typing import List
 import bpy
 import math
-from bpy.types import Operator
+from bpy.types import Operator, Context, Event
 from bpy.props import StringProperty
 
 
-def get_all_icons() -> list:
+def get_all_icons() -> List[str]:
+    # Dynamic access to Blender icon list
     return [item.identifier for item in bpy.types.UILayout.bl_rna.functions["operator"].parameters["icon"].enum_items]
 
 
@@ -13,15 +15,15 @@ class N_OT_IconShow(Operator):
     bl_label = "Icon Viewer"
     bl_description = "Browse and select an icon"
 
-    icon: StringProperty(default="")  # type: ignore
+    icon: StringProperty(default="")
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         if self.icon:
             context.window_manager.clipboard = self.icon
             self.report({"INFO"}, f"Icon '{self.icon}' copied to clipboard")
         return {"FINISHED"}
 
-    def invoke(self, context, event):
+    def invoke(self, context: Context, event: Event) -> set[str]:
         if not self.icon:
             icons = get_all_icons()
             num_cols = round(math.sqrt(len(icons)))
@@ -29,7 +31,7 @@ class N_OT_IconShow(Operator):
             return context.window_manager.invoke_props_dialog(self, width=width)
         return self.execute(context)
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         icons = get_all_icons()
         num_cols = round(math.sqrt(len(icons)))
         flow = self.layout.grid_flow(columns=num_cols, even_columns=True, even_rows=True, row_major=True)

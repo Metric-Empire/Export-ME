@@ -175,3 +175,4 @@ cython_debug/
 .vscode/*
 pdm.lock
 .github/*.md
+uv.lock

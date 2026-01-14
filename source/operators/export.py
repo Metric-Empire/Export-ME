@@ -1,48 +1,53 @@
+from typing import Dict, List, Optional, Literal, TYPE_CHECKING
 import bpy
 import bmesh
 from pathlib import Path
 from dataclasses import dataclass, field
+from bpy.types import Context, Object, Modifier, Mesh
 
 from ..core.types import ExportSettings
 from ..core.paths import get_children, get_object_location, set_object_location
 from .tools import fix_colliders
 
+if TYPE_CHECKING:
+    from mathutils import Vector
+
 
 @dataclass
 class MaterialBackup:
-    mat_faces: dict = field(default_factory=dict)
-    materials: list = field(default_factory=list)
+    mat_faces: Dict[int, int] = field(default_factory=dict)
+    materials: List[bpy.types.Material] = field(default_factory=list)
 
 
 class FBXExporter:
-    def __init__(self, context):
+    def __init__(self, context: Context) -> None:
         self.context = context
         self.settings = ExportSettings.from_scene(context.scene)
-        self.export_objects = context.selected_objects
+        self.export_objects: List[Object] = list(context.selected_objects)
         self._material_backup = MaterialBackup()
 
-    def export(self) -> Path:
+    def export(self) -> Optional[Path]:
         bpy.ops.object.mode_set(mode="OBJECT")
 
         if self.settings.purge_data:
             self._purge_orphans()
 
-        exported_path = None
+        exported_path: Optional[Path] = None
         for obj in self.export_objects:
             exported_path = self._export_object(obj)
 
         return exported_path
 
-    def _export_object(self, obj) -> Path:
+    def _export_object(self, obj: Object) -> Path:
         bpy.ops.object.select_all(action="DESELECT")
         obj.select_set(state=True)
 
-        original_location = self._center_object(obj) if self.settings.center_transform else None
+        original_location: Optional["Vector"] = self._center_object(obj) if self.settings.center_transform else None
 
         for child in get_children(obj):
             child.select_set(state=True)
 
-        materials_removed = self._remove_materials(obj) if self.settings.one_material_id else None
+        materials_removed: Optional[bool] = self._remove_materials(obj) if self.settings.one_material_id else None
 
         if self.settings.triangulate:
             self._add_triangulate(obj)
@@ -65,12 +70,12 @@ class FBXExporter:
 
         return export_path
 
-    def _center_object(self, obj):
+    def _center_object(self, obj: Object) -> "Vector":
         loc = get_object_location(obj)
         set_object_location(obj, (0, 0, 0))
         return loc
 
-    def _remove_materials(self, obj):
+    def _remove_materials(self, obj: Object) -> Optional[bool]:
         if obj.type == "ARMATURE" or len(obj.data.materials) <= 1:
             return None
 
@@ -90,7 +95,7 @@ class FBXExporter:
 
         return True
 
-    def _restore_materials(self, obj):
+    def _restore_materials(self, obj: Object) -> None:
         obj.data.materials.clear()
         for mat in self._material_backup.materials:
             obj.data.materials.append(mat)
@@ -106,26 +111,30 @@ class FBXExporter:
         bmesh.update_edit_mesh(obj.data)
         bpy.ops.object.mode_set(mode="OBJECT")
 
-    def _add_triangulate(self, obj):
+    def _add_triangulate(self, obj: Object) -> None:
         for child in get_children(obj):
-            mod = child.modifiers.new(name="ME_Triangulate", type="TRIANGULATE")
+            mod: Modifier = child.modifiers.new(name="ME_Triangulate", type="TRIANGULATE")
             mod.min_vertices = 5
             mod.keep_custom_normals = True
 
-    def _remove_triangulate(self, obj):
+    def _remove_triangulate(self, obj: Object) -> None:
         for child in get_children(obj):
             mod = child.modifiers.get("ME_Triangulate")
             if mod:
                 child.modifiers.remove(mod)
 
-    def _set_vertex_colors(self, obj):
-        def apply_black_vertex_color(mesh_obj):
-            mesh = mesh_obj.data
+    def _set_vertex_colors(self, obj: Object) -> None:
+        def apply_black_vertex_color(mesh_obj: Object) -> None:
+            if mesh_obj.type != "MESH" or not mesh_obj.data:
+                return
+            mesh: Mesh = mesh_obj.data
             if mesh.vertex_colors or mesh.color_attributes:
                 return
 
             mesh.vertex_colors.new(name="Col")
             color_layer = mesh.vertex_colors.active
+            if not color_layer:
+                return
 
             for poly in mesh.polygons:
                 for loop_index in poly.loop_indices:
@@ -135,17 +144,18 @@ class FBXExporter:
         for child in get_children(obj):
             apply_black_vertex_color(child)
 
-    def _remove_decal_uvs(self, obj):
+    def _remove_decal_uvs(self, obj: Object) -> None:
         uvs_to_remove = {"Decal UVs"}
 
         for child in get_children(obj):
-            if child.type != "MESH":
+            if child.type != "MESH" or not child.data:
                 continue
-            for uv in list(child.data.uv_layers):
+            mesh: Mesh = child.data
+            for uv in list(mesh.uv_layers):
                 if uv.name in uvs_to_remove:
-                    child.data.uv_layers.remove(uv)
+                    mesh.uv_layers.remove(uv)
 
-    def _rename_dots(self, obj):
+    def _rename_dots(self, obj: Object) -> None:
         if "." in obj.name:
             obj.name = obj.name.replace(".", "_")
 
@@ -153,13 +163,15 @@ class FBXExporter:
             if "." in child.name:
                 child.name = child.name.replace(".", "_")
 
-    def _write_fbx(self, obj) -> Path:
-        object_types = {"MESH"}
+    def _write_fbx(self, obj: Object) -> Path:
+        object_types: set[Literal["MESH", "ARMATURE"]] = {"MESH"}
         if self.settings.export_animations:
             object_types.add("ARMATURE")
 
         object_name = self.settings.custom_name or obj.name
         filepath = self.settings.export_folder / f"{object_name}.fbx"
+
+        smoothing: Literal["OFF", "FACE", "EDGE"] = self.settings.smoothing
 
         bpy.ops.export_scene.fbx(
             check_existing=False,
@@ -172,7 +184,7 @@ class FBXExporter:
             bake_anim_use_all_actions=self.settings.export_animations,
             use_armature_deform_only=True,
             bake_space_transform=self.settings.apply_transform,
-            mesh_smooth_type=self.settings.smoothing,
+            mesh_smooth_type=smoothing,
             add_leaf_bones=True,
             path_mode="ABSOLUTE",
             axis_up="Z",
@@ -181,7 +193,12 @@ class FBXExporter:
 
         return filepath
 
-    def _restore_object(self, obj, original_location, materials_removed):
+    def _restore_object(
+        self,
+        obj: Object,
+        original_location: Optional["Vector"],
+        materials_removed: Optional[bool],
+    ) -> None:
         if materials_removed:
             self._restore_materials(obj)
 
@@ -191,5 +208,5 @@ class FBXExporter:
         if self.settings.triangulate:
             self._remove_triangulate(obj)
 
-    def _purge_orphans(self):
+    def _purge_orphans(self) -> None:
         bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)

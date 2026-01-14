@@ -1,8 +1,8 @@
-import bpy
-from bpy.types import Panel
+from typing import List
+from bpy.types import Panel, Context, UILayout
 from pathlib import Path
 
-from ..core.preferences import get_preferences
+from ..core.preferences import get_preferences, ExportMEPreferences
 from ..operators.batch_export import has_multiple_uv_sets, any_child_has_multiple_uvs
 
 
@@ -13,8 +13,10 @@ class N_PT_Panel(Panel):
     bl_category = "ME"
     bl_idname = "N_PT_Panel"
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
+        if not layout:
+            return
         prefs = get_preferences(context)
 
         self._draw_projects_section(layout, prefs)
@@ -24,7 +26,7 @@ class N_PT_Panel(Panel):
         self._draw_export_button(layout)
         self._draw_uv_warnings(layout, context)
 
-    def _draw_projects_section(self, layout, prefs):
+    def _draw_projects_section(self, layout: UILayout, prefs: ExportMEPreferences) -> None:
         if not (prefs.use_project or prefs.custom_project_paths):
             return
 
@@ -39,7 +41,7 @@ class N_PT_Panel(Panel):
 
         layout.separator()
 
-    def _draw_folder_navigation(self, layout, context):
+    def _draw_folder_navigation(self, layout: UILayout, context: Context) -> None:
         layout.label(text="Export folder:")
 
         row = layout.row()
@@ -61,14 +63,14 @@ class N_PT_Panel(Panel):
         row.operator("os.new_folder", icon="NEWFOLDER", text="New Folder")
         row.prop(context.scene, "new_folder_name", text="")
 
-    def _draw_subfolder_list(self, layout, directory: Path):
+    def _draw_subfolder_list(self, layout: UILayout, directory: Path) -> None:
         if not directory.is_dir():
             return
 
         box = layout.box()
         col = box.column(align=True)
 
-        folders = sorted(
+        folders: List[Path] = sorted(
             (f for f in directory.iterdir() if f.is_dir() and not (f.name.startswith("__") and f.name.endswith("__"))),
             key=lambda f: not f.name.startswith("_"),
         )
@@ -81,11 +83,11 @@ class N_PT_Panel(Panel):
             op = col.operator("os.select_folder", text=folder.name)
             op.folder_path = folder.as_posix()
 
-    def _draw_export_options(self, layout, context):
+    def _draw_export_options(self, layout: UILayout, context: Context) -> None:
         layout.label(text="Export Options:")
         box = layout.box()
 
-        options = [
+        options: List[tuple[str, str | None]] = [
             ("center_transform", "Center transform"),
             ("apply_transform", "Apply transform"),
             ("no_decal_uv", None),
@@ -102,7 +104,7 @@ class N_PT_Panel(Panel):
             else:
                 row.prop(context.scene, prop_name)
 
-    def _draw_advanced_options(self, layout, context):
+    def _draw_advanced_options(self, layout: UILayout, context: Context) -> None:
         layout.label(text="Advanced Options:")
         box = layout.box()
 
@@ -118,12 +120,12 @@ class N_PT_Panel(Panel):
         layout.label(text="Custom Name:")
         layout.row().prop(context.scene, "custom_name", text="")
 
-    def _draw_export_button(self, layout):
+    def _draw_export_button(self, layout: UILayout) -> None:
         col = layout.column()
         col.scale_y = 2.0
         col.operator("object.bat_export", text="Export")
 
-    def _draw_uv_warnings(self, layout, context):
+    def _draw_uv_warnings(self, layout: UILayout, context: Context) -> None:
         for obj in context.selected_objects:
             if (obj.type == "MESH" and has_multiple_uv_sets(obj)) or any_child_has_multiple_uvs(obj):
                 row = layout.row()

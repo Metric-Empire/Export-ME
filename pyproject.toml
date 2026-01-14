@@ -11,9 +11,19 @@ license = { text = "GPL3" }
 
 [project.optional-dependencies]
 ruff = ["ruff>=0.3.5"]
-scripts = ["toml>=0.10.2"]
+dev = ["toml>=0.10.2"]
 
 [tool.ruff]
-ignore = ["F403", "E402", "F405"]
+lint.ignore = ["F403", "E402", "F405"]
 target-version = "py312"
 line-length = 120
+
+[tool.pyright]
+include = ["source"]
+typeCheckingMode = "basic"
+reportInvalidTypeForm = "none"
+reportAttributeAccessIssue = "none"
+reportOptionalMemberAccess = "none"
+reportArgumentType = "none"
+reportReturnType = "none"
+reportAssignmentType = "none"

@@ -1,11 +1,12 @@
+from typing import Tuple, List, Optional
 import bpy
-from bpy.types import Operator
+from bpy.types import Operator, Context, Object, Modifier, NodeTree
 
-UE_COLLIDER_PREFIXES = ("UBX_", "USP_", "UCX_", "UCP_")
+UE_COLLIDER_PREFIXES: Tuple[str, ...] = ("UBX_", "USP_", "UCX_", "UCP_")
 
 
-def fix_colliders(obj) -> bool:
-    colliders = [child for child in obj.children if child.name.startswith(UE_COLLIDER_PREFIXES)]
+def fix_colliders(obj: Object) -> bool:
+    colliders: List[Object] = [child for child in obj.children if child.name.startswith(UE_COLLIDER_PREFIXES)]
 
     if not colliders:
         return False
@@ -17,18 +18,19 @@ def fix_colliders(obj) -> bool:
     return True
 
 
-def _process_collider(collider, parent_name: str, suffix: str):
-    geo_modifier = collider.modifiers.get("GeometryNodes")
+def _process_collider(collider: Object, parent_name: str, suffix: str) -> None:
+    geo_modifier: Optional[Modifier] = collider.modifiers.get("GeometryNodes")
 
     if geo_modifier:
-        prefix = geo_modifier.node_group.name.split("_")[0]
+        node_group: NodeTree = geo_modifier.node_group
+        prefix = node_group.name.split("_")[0]
         collider.name = f"{prefix}_{parent_name}{suffix}"
     else:
         collider.name = f"UCX_{parent_name}{suffix}"
         _apply_convex_hull(collider)
 
 
-def _apply_convex_hull(obj):
+def _apply_convex_hull(obj: Object) -> None:
     bpy.ops.object.select_all(action="DESELECT")
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
@@ -43,7 +45,7 @@ class N_OT_FixColliderName(Operator):
     bl_label = "Fix Collider Name"
     bl_description = "Fix collider names and ensure they are convex"
 
-    def execute(self, context):
+    def execute(self, context: Context) -> set[str]:
         any_fixed = False
 
         for obj in context.selected_objects:
