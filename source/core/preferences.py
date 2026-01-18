@@ -121,9 +121,20 @@ class N_OT_RemoveCustomPath(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class N_OT_OpenAddonPreferences(bpy.types.Operator):
+    bl_idname = "preferences.open_addon_preferences"
+    bl_label = "Open Export ME Preferences"
+    bl_description = "Open addon preferences to create a new project"
+
+    def execute(self, context: Context) -> set[str]:
+        bpy.ops.preferences.addon_show(module=base_package)
+        return {"FINISHED"}
+
+
 PREFERENCE_CLASSES: Tuple[type, ...] = (
     CustomProjectPath,
     ExportMEPreferences,
     N_OT_AddCustomPath,
     N_OT_RemoveCustomPath,
+    N_OT_OpenAddonPreferences,
 )

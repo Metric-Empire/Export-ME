@@ -31,6 +31,13 @@ class N_PT_Panel(Panel):
             return
 
         layout.label(text="Projects:")
+        
+        if not prefs.custom_project_paths:
+            # Show "Create Project" button when no projects exist
+            layout.operator("preferences.open_addon_preferences", text="Create Project", icon="ADD")
+            layout.separator()
+            return
+
         col = layout.column()
 
         for index, path in enumerate(prefs.custom_project_paths):
