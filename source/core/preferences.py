@@ -104,7 +104,9 @@ class ExportMEPreferences(AddonPreferences):
 
                 row = subbox.row()
                 row.prop(subpath, "icon", text="Icon")
-                row.operator("iv.icons_show", text="Browse Icons")
+                op = row.operator("iv.icons_show", text="Browse Icons")
+                op.project_index = project_index
+                op.subpath_index = subpath_index
 
             # Add subpath button
             op = box.operator("preferences.add_project_subpath", text="Add Subpath", icon="ADD")

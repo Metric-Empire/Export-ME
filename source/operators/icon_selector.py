@@ -2,7 +2,7 @@ from typing import List
 import bpy
 import math
 from bpy.types import Operator, Context, Event
-from bpy.props import StringProperty
+from bpy.props import StringProperty, IntProperty
 
 
 def get_all_icons() -> List[str]:
@@ -16,11 +16,19 @@ class N_OT_IconShow(Operator):
     bl_description = "Browse and select an icon"
 
     icon: StringProperty(default="")
+    project_index: IntProperty(default=-1)
+    subpath_index: IntProperty(default=-1)
 
     def execute(self, context: Context) -> set[str]:
-        if self.icon:
-            context.window_manager.clipboard = self.icon
-            self.report({"INFO"}, f"Icon '{self.icon}' copied to clipboard")
+        if self.icon and self.project_index >= 0 and self.subpath_index >= 0:
+            from ..core.preferences import get_preferences
+            prefs = get_preferences(context)
+            
+            if self.project_index < len(prefs.custom_project_paths):
+                project = prefs.custom_project_paths[self.project_index]
+                if self.subpath_index < len(project.subpaths):
+                    project.subpaths[self.subpath_index].icon = self.icon
+                    self.report({"INFO"}, f"Icon '{self.icon}' set for subpath")
         return {"FINISHED"}
 
     def invoke(self, context: Context, event: Event) -> set[str]:
@@ -39,3 +47,5 @@ class N_OT_IconShow(Operator):
         for icon_name in icons:
             op = flow.operator(self.bl_idname, text="", icon=icon_name, emboss=False)
             op.icon = icon_name
+            op.project_index = self.project_index
+            op.subpath_index = self.subpath_index
