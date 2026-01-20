@@ -19,41 +19,63 @@ class N_PT_Panel(Panel):
             return
         prefs = get_preferences(context)
 
-        self._draw_projects_section(layout, prefs)
+        self._draw_projects_section(layout, prefs, context)
         self._draw_folder_navigation(layout, context)
         self._draw_export_options(layout, context)
         self._draw_advanced_options(layout, context)
         self._draw_export_button(layout)
         self._draw_uv_warnings(layout, context)
 
-    def _draw_projects_section(self, layout: UILayout, prefs: ExportMEPreferences) -> None:
-        if not (prefs.use_project or prefs.custom_project_paths):
-            return
-
-        layout.label(text="Projects:")
-        
+    def _draw_projects_section(self, layout: UILayout, prefs: ExportMEPreferences, context: Context) -> None:
         if not prefs.custom_project_paths:
-            # Show "Create Project" button when no projects exist
+            layout.label(text="Projects:")
             layout.operator("preferences.open_addon_preferences", text="Create Project", icon="ADD")
             layout.separator()
             return
 
-        col = layout.column()
+        layout.label(text="Projects:")
 
-        for index, path in enumerate(prefs.custom_project_paths):
-            name = path.project_name or "Untitled"
-            row = col.row(align=True)
-            op = row.operator("os.set_custom_project_path", icon="BOOKMARKS", text=name)
-            op.index = index
+        col = layout.column()
+        row = col.row()
+        row.prop(context.scene, "selected_project_enum", text="")
+
+        # Get selected project index from enum string
+        try:
+            selected_index = int(context.scene.selected_project_enum)
+        except (ValueError, AttributeError):
+            selected_index = 0
+
+        # Display subpath buttons for selected project
+        if selected_index < len(prefs.custom_project_paths):
+            selected_project = prefs.custom_project_paths[selected_index]
+
+            if selected_project.show_root_button:
+                op = col.operator(
+                    "os.set_custom_project_path",
+                    text="Project Root",
+                    icon="HOME",
+                )
+                op.index = selected_index
+
+            if selected_project.subpaths:
+                box = layout.box()
+                box.label(text="Subpaths:")
+                for subpath_index, subpath in enumerate(selected_project.subpaths):
+                    op = box.operator(
+                        "os.set_project_subpath",
+                        text=subpath.name or f"Subpath {subpath_index + 1}",
+                        icon=subpath.icon or "FILE_FOLDER",
+                    )
+                    op.project_index = selected_index
+                    op.subpath_index = subpath_index
 
         layout.separator()
 
     def _draw_folder_navigation(self, layout: UILayout, context: Context) -> None:
         layout.label(text="Export folder:")
 
-        row = layout.row()
+        row = layout.row(align=True)
         row.prop(context.scene, "export_folder", text="")
-        row.operator("object.openfolder", text="", icon="FILE_TICK")
 
         directory = Path(context.scene.export_folder)
         parent_name = directory.parent.name

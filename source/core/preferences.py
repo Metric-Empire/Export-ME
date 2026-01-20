@@ -19,9 +19,22 @@ def get_custom_paths(context: Context) -> bpy.types.bpy_prop_collection:
     return get_preferences(context).custom_project_paths
 
 
-def get_subpath(context: Context) -> Path:
-    path = str(get_preferences(context).project_subpath)
-    return Path(path.lstrip("\\/"))
+class ProjectSubpath(PropertyGroup):
+    name: StringProperty(
+        name="Subpath Name",
+        description="Display name for this subpath",
+        default="New Subpath",
+    )
+    relative_path: StringProperty(
+        name="Relative Path",
+        description="Path relative to project root (e.g., Content/Assets)",
+        default="",
+    )
+    icon: StringProperty(
+        name="Icon",
+        description="Icon identifier for this subpath",
+        default="FILE_FOLDER",
+    )
 
 
 class CustomProjectPath(PropertyGroup):
@@ -34,10 +47,15 @@ class CustomProjectPath(PropertyGroup):
         name="Project Name",
         description="Display name for this project",
     )
-    icon: StringProperty(
-        name="Icon",
-        description="Icon identifier for this project",
-        default="BLENDER",
+    show_root_button: BoolProperty(
+        name="Show Root Folder Button",
+        description="Show the project root button in the N panel",
+        default=True,
+    )
+    subpaths: CollectionProperty(
+        type=ProjectSubpath,
+        name="Subpaths",
+        description="List of subpaths for this project",
     )
 
 
@@ -46,58 +64,51 @@ class ExportMEPreferences(AddonPreferences):
 
     custom_project_paths: CollectionProperty(type=CustomProjectPath)
 
-    use_project: BoolProperty(
-        name="Use Project Path",
-        description="Use the project path for FBX export",
-        default=True,
-    )
-
-    project_subpath: StringProperty(
-        name="Project Subpath",
-        subtype="FILE_PATH",
-        description="Subpath to the FBX folder within project",
-        default="Content/_GraphicBank/Asset/Mesh",
-    )
-
     def draw(self, context: Context) -> None:
         layout = self.layout
 
         # Project Path Section
         col = layout.column(align=True)
-        col.label(text="Project Paths:")
+        col.label(text="Projects:")
 
-        layout.operator("preferences.add_custom_path", text="Add New Path", icon="ADD")
+        layout.operator("preferences.add_custom_path", text="Add New Project", icon="ADD")
 
-        for index, path in enumerate(self.custom_project_paths):
+        for project_index, project in enumerate(self.custom_project_paths):
             box = layout.box()
-            box.prop(path, "project_name", text="Name")
-            box.prop(path, "filepath", text="Path")
 
+            # Project header
             row = box.row()
-            row.prop(path, "icon", text="Icon")
-            row.operator("iv.icons_show", text="Browse")
-            row.operator("preferences.remove_custom_path", text="", icon="X").index = index
+            row.prop(project, "project_name", text="Project Name")
+            row.operator("preferences.remove_custom_path", text="", icon="X").index = project_index
 
-        # Project Subpath Section
-        if self.custom_project_paths:
-            box = layout.box()
-            box.prop(self, "use_project")
+            box.prop(project, "filepath", text="Path")
+            box.prop(project, "show_root_button", text="Show Root Folder Button")
 
-            if self.use_project:
-                box.prop(self, "project_subpath")
+            # Subpaths section
+            box.label(text="Subpaths:")
 
-                # Validate path existence
-                if self.custom_project_paths:
-                    first_project = Path(self.custom_project_paths[0].filepath)
-                    subpath = get_subpath(context)
-                    full_path = first_project / subpath
+            for subpath_index, subpath in enumerate(project.subpaths):
+                subbox = box.box()
+                row = subbox.row()
+                row.prop(subpath, "name", text="Name")
 
-                    if not full_path.exists():
-                        row = box.row()
-                        row.label(
-                            text="Path does not exist, ensure the subpath is correct",
-                            icon="ERROR",
-                        )
+                op = row.operator("preferences.remove_project_subpath", text="", icon="X")
+                op.project_index = project_index
+                op.subpath_index = subpath_index
+
+                row = subbox.row(align=True)
+                row.prop(subpath, "relative_path", text="Path")
+                op = row.operator("preferences.browse_project_subpath", text="", icon="FILEBROWSER")
+                op.project_index = project_index
+                op.subpath_index = subpath_index
+
+                row = subbox.row()
+                row.prop(subpath, "icon", text="Icon")
+                row.operator("iv.icons_show", text="Browse Icons")
+
+            # Add subpath button
+            op = box.operator("preferences.add_project_subpath", text="Add Subpath", icon="ADD")
+            op.project_index = project_index
 
 
 class N_OT_AddCustomPath(bpy.types.Operator):
@@ -121,6 +132,112 @@ class N_OT_RemoveCustomPath(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class N_OT_AddProjectSubpath(bpy.types.Operator):
+    bl_idname = "preferences.add_project_subpath"
+    bl_label = "Add Project Subpath"
+    bl_description = "Add a new subpath to this project"
+
+    project_index: IntProperty()
+
+    def execute(self, context: Context) -> set[str]:
+        prefs = get_preferences(context)
+
+        if self.project_index >= len(prefs.custom_project_paths):
+            self.report({"ERROR"}, "Invalid project index")
+            return {"CANCELLED"}
+
+        project = prefs.custom_project_paths[self.project_index]
+        project.subpaths.add()
+
+        return {"FINISHED"}
+
+
+class N_OT_RemoveProjectSubpath(bpy.types.Operator):
+    bl_idname = "preferences.remove_project_subpath"
+    bl_label = "Remove Project Subpath"
+    bl_description = "Remove this subpath from the project"
+
+    project_index: IntProperty()
+    subpath_index: IntProperty()
+
+    def execute(self, context: Context) -> set[str]:
+        prefs = get_preferences(context)
+
+        if self.project_index >= len(prefs.custom_project_paths):
+            self.report({"ERROR"}, "Invalid project index")
+            return {"CANCELLED"}
+
+        project = prefs.custom_project_paths[self.project_index]
+
+        if self.subpath_index >= len(project.subpaths):
+            self.report({"ERROR"}, "Invalid subpath index")
+            return {"CANCELLED"}
+
+        project.subpaths.remove(self.subpath_index)
+
+        return {"FINISHED"}
+
+
+class N_OT_BrowseProjectSubpath(bpy.types.Operator):
+    bl_idname = "preferences.browse_project_subpath"
+    bl_label = "Browse Project Subpath"
+    bl_description = "Browse for a subpath relative to the project root"
+
+    directory: StringProperty(subtype="DIR_PATH")
+    project_index: IntProperty()
+    subpath_index: IntProperty()
+
+    def execute(self, context: Context) -> set[str]:
+        prefs = get_preferences(context)
+
+        if self.project_index >= len(prefs.custom_project_paths):
+            self.report({"ERROR"}, "Invalid project index")
+            return {"CANCELLED"}
+
+        project = prefs.custom_project_paths[self.project_index]
+
+        if self.subpath_index >= len(project.subpaths):
+            self.report({"ERROR"}, "Invalid subpath index")
+            return {"CANCELLED"}
+
+        project_root = Path(project.filepath).resolve()
+        selected_path = Path(self.directory).resolve()
+
+        # Calculate relative path
+        try:
+            relative = selected_path.relative_to(project_root)
+            project.subpaths[self.subpath_index].relative_path = str(relative)
+        except ValueError:
+            # If path is not relative to project root, show error
+            self.report({"ERROR"}, "Selected path must be within the project root")
+            return {"CANCELLED"}
+
+        return {"FINISHED"}
+
+    def invoke(self, context: Context, event) -> set[str]:
+        prefs = get_preferences(context)
+
+        if self.project_index >= len(prefs.custom_project_paths):
+            self.report({"ERROR"}, "Invalid project index")
+            return {"CANCELLED"}
+
+        project = prefs.custom_project_paths[self.project_index]
+        project_root = Path(project.filepath)
+
+        # Set initial directory
+        if self.subpath_index < len(project.subpaths):
+            subpath = project.subpaths[self.subpath_index]
+            if subpath.relative_path:
+                self.directory = str(project_root / subpath.relative_path)
+            else:
+                self.directory = str(project_root)
+        else:
+            self.directory = str(project_root)
+
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+
 class N_OT_OpenAddonPreferences(bpy.types.Operator):
     bl_idname = "preferences.open_addon_preferences"
     bl_label = "Open Export ME Preferences"
@@ -132,9 +249,13 @@ class N_OT_OpenAddonPreferences(bpy.types.Operator):
 
 
 PREFERENCE_CLASSES: Tuple[type, ...] = (
+    ProjectSubpath,
     CustomProjectPath,
     ExportMEPreferences,
     N_OT_AddCustomPath,
     N_OT_RemoveCustomPath,
+    N_OT_AddProjectSubpath,
+    N_OT_RemoveProjectSubpath,
+    N_OT_BrowseProjectSubpath,
     N_OT_OpenAddonPreferences,
 )

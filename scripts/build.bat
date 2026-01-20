@@ -1,1 +1,1 @@
-"C:\BlenderLauncher\stable\blender-5.0.1-stable.a3db93c5b259\blender.exe" -c extension build --source-dir=./source
+"C:\BlenderLauncher\daily\blender-5.1.0-alpha+daily.57871a572797\blender.exe" -c extension build --source-dir=./source

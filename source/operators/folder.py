@@ -1,18 +1,6 @@
-import bpy
 from bpy.types import Operator, Context
 from bpy.props import StringProperty
 from pathlib import Path
-
-
-class N_OT_OpenFolder(Operator):
-    bl_idname = "object.openfolder"
-    bl_label = "Open Folder"
-    bl_description = "Open the export folder in file browser"
-    bl_options = {"REGISTER"}
-
-    def execute(self, context: Context) -> set[str]:
-        bpy.ops.wm.path_open(filepath=context.scene.export_folder)
-        return {"FINISHED"}
 
 
 class N_OT_SelectFolder(Operator):

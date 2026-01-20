@@ -1,16 +1,16 @@
 from typing import Dict, Tuple, Any
 import bpy
-from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
 
 from .ui import N_PT_Panel
 from .operators import (
     N_OT_BatchExport,
-    N_OT_OpenFolder,
     N_OT_SelectFolder,
     N_OT_ParentFolder,
     N_OT_NewFolder,
     N_OT_SetProjectPath,
     N_OT_SetCustomProjectPath,
+    N_OT_SetProjectSubpath,
     N_OT_FixColliderName,
     N_OT_SmartDecal,
     N_OT_IconShow,
@@ -18,7 +18,26 @@ from .operators import (
 from .core.preferences import PREFERENCE_CLASSES
 
 
+def get_project_enum_items(self, context):
+    """Generate enum items for project dropdown"""
+    from .core.preferences import get_preferences
+
+    prefs = get_preferences(context)
+
+    items = []
+    for index, project in enumerate(prefs.custom_project_paths):
+        name = project.project_name or f"Project {index + 1}"
+        items.append((str(index), name, f"Select {name}", index))
+
+    return items if items else [("0", "No Projects", "No projects available", 0)]
+
+
 SCENE_PROPERTIES: Dict[str, Any] = {
+    "selected_project_enum": EnumProperty(
+        name="Selected Project",
+        description="Currently selected project",
+        items=get_project_enum_items,
+    ),
     "export_folder": StringProperty(
         name="Export folder",
         subtype="DIR_PATH",
@@ -101,12 +120,12 @@ CLASSES: Tuple[type, ...] = (
     *PREFERENCE_CLASSES,
     N_PT_Panel,
     N_OT_BatchExport,
-    N_OT_OpenFolder,
     N_OT_SelectFolder,
     N_OT_ParentFolder,
     N_OT_NewFolder,
     N_OT_SetProjectPath,
     N_OT_SetCustomProjectPath,
+    N_OT_SetProjectSubpath,
     N_OT_FixColliderName,
     N_OT_SmartDecal,
     N_OT_IconShow,
