@@ -1,6 +1,6 @@
 schema_version = "1.0.0"
 id = "export_me"
-version = "2.1.0"
+version = "2.2.0"
 name = "Export ME"
 tagline = "Game FBX Exporter by the Metric Empire Studio"
 maintainer = "Victor Chedeville <victor.ched@gmail.com>"
