@@ -1,6 +1,6 @@
 from typing import Dict, Tuple, Any
 import bpy
-from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from .ui import N_PT_Panel
 from .operators import (

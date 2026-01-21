@@ -19,6 +19,34 @@ def get_custom_paths(context: Context) -> bpy.types.bpy_prop_collection:
     return get_preferences(context).custom_project_paths
 
 
+def add_recent_export_path(context: Context, export_path: str) -> None:
+    """Add an export path to recent history, avoiding duplicates and respecting max limit"""
+    prefs = get_preferences(context)
+    
+    # Remove duplicate if it exists
+    for index, recent_path in enumerate(prefs.recent_export_paths):
+        if recent_path.filepath == export_path:
+            prefs.recent_export_paths.remove(index)
+            break
+    
+    # Add new path at the beginning
+    new_recent = prefs.recent_export_paths.add()
+    new_recent.filepath = export_path
+    prefs.recent_export_paths.move(len(prefs.recent_export_paths) - 1, 0)
+    
+    # Remove excess items beyond max_recent_paths
+    while len(prefs.recent_export_paths) > prefs.max_recent_paths:
+        prefs.recent_export_paths.remove(len(prefs.recent_export_paths) - 1)
+
+
+class RecentExportPath(PropertyGroup):
+    filepath: StringProperty(
+        name="Recent Export Path",
+        subtype="DIR_PATH",
+        description="Recently used export folder path",
+    )
+
+
 class ProjectSubpath(PropertyGroup):
     name: StringProperty(
         name="Subpath Name",
@@ -63,6 +91,14 @@ class ExportMEPreferences(AddonPreferences):
     bl_idname = base_package
 
     custom_project_paths: CollectionProperty(type=CustomProjectPath)
+    recent_export_paths: CollectionProperty(type=RecentExportPath)
+    max_recent_paths: IntProperty(
+        name="Max Recent Paths",
+        description="Maximum number of recent export paths to remember",
+        default=5,
+        min=1,
+        max=20,
+    )
 
     def draw(self, context: Context) -> None:
         layout = self.layout
@@ -115,6 +151,22 @@ class ExportMEPreferences(AddonPreferences):
             # Add subpath button
             op = box.operator("preferences.add_project_subpath", text="Add Subpath", icon="ADD")
             op.project_index = project_index
+
+        # Recent Export Paths Section
+        layout.separator()
+        col = layout.column(align=True)
+        col.label(text="Recent Export Paths:")
+        
+        row = col.row(align=True)
+        row.prop(self, "max_recent_paths", text="Max History")
+        row.operator("preferences.clear_recent_paths", text="Clear History", icon="X")
+        
+        if self.recent_export_paths:
+            box = layout.box()
+            for index, recent_path in enumerate(self.recent_export_paths):
+                box.row().label(text=f"{index + 1}. {recent_path.filepath}", icon="FOLDER_REDIRECT")
+        else:
+            layout.label(text="No recent export paths", icon="INFO")
 
 
 class N_OT_AddCustomPath(bpy.types.Operator):
@@ -254,7 +306,40 @@ class N_OT_OpenAddonPreferences(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class N_OT_SetRecentPath(bpy.types.Operator):
+    bl_idname = "os.set_recent_path"
+    bl_label = "Set Recent Export Path"
+    bl_description = "Set export folder to this recent path"
+
+    index: IntProperty()
+
+    def execute(self, context: Context) -> set[str]:
+        prefs = get_preferences(context)
+
+        if self.index >= len(prefs.recent_export_paths):
+            self.report({"ERROR"}, "Invalid recent path index")
+            return {"CANCELLED"}
+
+        recent_path = prefs.recent_export_paths[self.index]
+        context.scene.export_folder = recent_path.filepath
+
+        return {"FINISHED"}
+
+
+class N_OT_ClearRecentPaths(bpy.types.Operator):
+    bl_idname = "preferences.clear_recent_paths"
+    bl_label = "Clear Recent Paths"
+    bl_description = "Clear all recent export paths"
+
+    def execute(self, context: Context) -> set[str]:
+        prefs = get_preferences(context)
+        prefs.recent_export_paths.clear()
+        self.report({"INFO"}, "Recent export paths cleared")
+        return {"FINISHED"}
+
+
 PREFERENCE_CLASSES: Tuple[type, ...] = (
+    RecentExportPath,
     ProjectSubpath,
     CustomProjectPath,
     ExportMEPreferences,
@@ -264,4 +349,6 @@ PREFERENCE_CLASSES: Tuple[type, ...] = (
     N_OT_RemoveProjectSubpath,
     N_OT_BrowseProjectSubpath,
     N_OT_OpenAddonPreferences,
+    N_OT_SetRecentPath,
+    N_OT_ClearRecentPaths,
 )

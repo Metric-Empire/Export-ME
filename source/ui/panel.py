@@ -20,6 +20,7 @@ class N_PT_Panel(Panel):
         prefs = get_preferences(context)
 
         self._draw_projects_section(layout, prefs, context)
+        self._draw_recent_paths_section(layout, prefs, context)
         self._draw_folder_navigation(layout, context)
         self._draw_export_options(layout, context)
         self._draw_advanced_options(layout, context)
@@ -68,6 +69,28 @@ class N_PT_Panel(Panel):
                     )
                     op.project_index = selected_index
                     op.subpath_index = subpath_index
+
+        layout.separator()
+
+    def _draw_recent_paths_section(self, layout: UILayout, prefs: ExportMEPreferences, context: Context) -> None:
+        if not prefs.recent_export_paths:
+            return
+
+        layout.label(text="Recent Export Paths:")
+        box = layout.box()
+        col = box.column(align=True)
+
+        for index, recent_path in enumerate(prefs.recent_export_paths):
+            from pathlib import Path
+            path_obj = Path(recent_path.filepath)
+            display_name = path_obj.name if path_obj.name else recent_path.filepath
+            
+            op = col.operator(
+                "os.set_recent_path",
+                text=display_name,
+                icon="FOLDER_REDIRECT",
+            )
+            op.index = index
 
         layout.separator()
 

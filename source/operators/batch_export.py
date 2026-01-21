@@ -2,6 +2,7 @@ from typing import Set
 from bpy.types import Operator, Context, Object, Mesh
 
 from .export import FBXExporter
+from ..core.preferences import add_recent_export_path
 
 
 IGNORED_UV_NAMES: Set[str] = {"Decal UVs", "UVMap", "Atlas UVs"}
@@ -36,5 +37,6 @@ class N_OT_BatchExport(Operator):
         path = exporter.export()
 
         if path:
+            add_recent_export_path(context, str(path.parent))
             self.report({"INFO"}, f"Exported to {path.as_posix()}")
         return {"FINISHED"}

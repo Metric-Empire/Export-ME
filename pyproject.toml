@@ -1,6 +1,6 @@
 [project]
 name = "Export-ME"
-version = "2.2.0"
+version = "2.3.0"
 description = "Metric Empire Blender Addon"
 authors = [{ name = "Metric Empire", email = "hello@metricempire.com" }]
 maintainers = [{ name = "Victor Chedeville", email = "victor.ched@gmail.com" }]
