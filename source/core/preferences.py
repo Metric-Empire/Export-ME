@@ -103,8 +103,12 @@ class ExportMEPreferences(AddonPreferences):
                 op.subpath_index = subpath_index
 
                 row = subbox.row()
-                row.prop(subpath, "icon", text="Icon")
-                op = row.operator("export_me.icons_show", text="Browse Icons")
+                row.label(text="Icon:")
+                icon_to_display = subpath.icon if subpath.icon else "QUESTION"
+                op = row.operator("export_me.icons_show", text="", icon=icon_to_display)
+                op.project_index = project_index
+                op.subpath_index = subpath_index
+                op = row.operator("export_me.icons_show", text="Select Icon")
                 op.project_index = project_index
                 op.subpath_index = subpath_index
 

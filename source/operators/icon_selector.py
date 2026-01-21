@@ -47,9 +47,9 @@ class N_OT_IconShow(Operator):
     bl_label = "Icon Viewer"
     bl_description = "Browse and select an icon"
 
-    icon: StringProperty(default="")
-    project_index: IntProperty(default=-1)
-    subpath_index: IntProperty(default=-1)
+    icon: StringProperty(default="", options={'SKIP_SAVE'})
+    project_index: IntProperty(default=-1, options={'SKIP_SAVE'})
+    subpath_index: IntProperty(default=-1, options={'SKIP_SAVE'})
 
     def execute(self, context: Context) -> set[str]:
         if self.icon and self.project_index >= 0 and self.subpath_index >= 0:
