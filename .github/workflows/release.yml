@@ -10,6 +10,10 @@ on:
         description: "Specific tag name"
         required: true
         type: string
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -35,3 +39,70 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_VERSION }}
           files: ./dist/Export-ME-*.zip
+      - name: Get Release Info
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+        id: release_info
+        run: |
+          ZIP_FILE=$(ls ./dist/Export-ME-*.zip)
+          FILE_SIZE=$(stat -c%s "$ZIP_FILE")
+          FILE_HASH=$(sha256sum "$ZIP_FILE" | awk '{print $1}')
+          VERSION="${{ env.RELEASE_VERSION }}"
+          VERSION_NO_V="${VERSION#v}"
+          echo "file_size=$FILE_SIZE" >> $GITHUB_OUTPUT
+          echo "file_hash=$FILE_HASH" >> $GITHUB_OUTPUT
+          echo "version=$VERSION_NO_V" >> $GITHUB_OUTPUT
+      - name: Update index.json
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          python3 - <<'EOF'
+          import json
+          
+          # Read the current index.json
+          with open('docs/index.json', 'r') as f:
+              data = json.load(f)
+          
+          # Update the extension data
+          extension = data['data'][0]
+          extension['version'] = "${{ steps.release_info.outputs.version }}"
+          extension['archive_url'] = "https://github.com/metric-empire/export-me/releases/download/${{ env.RELEASE_VERSION }}/Export-ME-${{ steps.release_info.outputs.version }}.zip"
+          extension['archive_size'] = int("${{ steps.release_info.outputs.file_size }}")
+          extension['archive_hash'] = "sha256:${{ steps.release_info.outputs.file_hash }}"
+          
+          # Write back to index.json
+          with open('docs/index.json', 'w') as f:
+              json.dump(data, f, indent=2)
+          
+          print(f"Updated index.json with version ${{ steps.release_info.outputs.version }}")
+          EOF
+      - name: Update index.html
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          python3 - <<'EOF'
+          import re
+          
+          version = "${{ steps.release_info.outputs.version }}"
+          tag = "${{ env.RELEASE_VERSION }}"
+          
+          with open('docs/index.html', 'r') as f:
+              content = f.read()
+          
+          # Update the download link
+          content = re.sub(
+              r'<a href="https://github\.com/metric-empire/export-me/releases/download/[^"]+">export_me-[^<]+</a>',
+              f'<a href="https://github.com/metric-empire/export-me/releases/download/{tag}/Export-ME-{version}.zip">export_me-{version}</a>',
+              content
+          )
+          
+          with open('docs/index.html', 'w') as f:
+              f.write(content)
+          
+          print(f"Updated index.html with version {version}")
+          EOF
+      - name: Commit and Push Updates
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/index.json docs/index.html
+          git diff --staged --quiet || git commit -m "Update extension repository to version ${{ steps.release_info.outputs.version }}"
+          git push
