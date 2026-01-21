@@ -13,7 +13,7 @@ Blender FBX Exporter Add-on to easily export assets directly in the game engine 
 1. Open Blender and go to **Edit** → **Preferences** → **Get Extensions**
 2. Click on the dropdown next to the **↓** icon and select **Repositories**
 3. Click the **＋** button and select **Add Remote Repository**
-4. Set the URL to: `https://metric-empire.github.io/export-me/index.json`
+4. Set the URL to: `https://metric-empire.github.io/Export-ME/index.json`
 5. Enable **Check for Updates on Start**
 6. Return to **Get Extensions**, filter for "Export ME" and click **Install**
 
