@@ -73,7 +73,7 @@ class ProjectSubpath(PropertyGroup):
     name: StringProperty(
         name="Subpath Name",
         description="Display name for this subpath",
-        default="New Subpath",
+        default="",
     )
     relative_path: StringProperty(
         name="Relative Path",
@@ -83,7 +83,7 @@ class ProjectSubpath(PropertyGroup):
     icon: StringProperty(
         name="Icon",
         description="Icon identifier for this subpath",
-        default="FILE_FOLDER",
+        default="BOOKMARKS",
     )
 
 
@@ -149,7 +149,7 @@ class ExportMEPreferences(AddonPreferences):
         col = layout.column(align=True)
         col.label(text="Projects:")
 
-        layout.operator("preferences.add_custom_path", text="Add New Project", icon="ADD")
+        layout.operator("preferences.add_custom_path", text="Create Project", icon="ADD")
 
         for project_index, project in enumerate(self.custom_project_paths):
             box = layout.box()
@@ -183,7 +183,9 @@ class ExportMEPreferences(AddonPreferences):
 
                 row = subbox.row()
                 row.label(text="Icon:")
-                icon_to_display = subpath.icon if subpath.icon else "QUESTION"
+                if subpath.icon:
+                    print(subpath.icon)
+                icon_to_display = subpath.icon
                 op = row.operator("export_me.icons_show", text="", icon=icon_to_display)
                 op.project_index = project_index
                 op.subpath_index = subpath_index

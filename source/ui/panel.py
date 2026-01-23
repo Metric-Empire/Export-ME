@@ -67,7 +67,7 @@ class N_PT_Panel(Panel):
                     op = box.operator(
                         "os.set_project_subpath",
                         text=subpath.name or f"Subpath {subpath_index + 1}",
-                        icon=subpath.icon or "FILE_FOLDER",
+                        icon=subpath.icon,
                     )
                     op.project_index = selected_index
                     op.subpath_index = subpath_index
