@@ -5,6 +5,7 @@
 ## Overview
 
 Blender FBX Exporter Add-on to easily export assets directly in the game engine with automatic asset processing and validation.
+Addon web page: https://metric-empire.github.io/Export-ME/
 
 ## Installation
 
@@ -21,7 +22,7 @@ This method allows automatic updates when new versions are released.
 
 ### Via Download
 
-Download the latest release from the [Releases page](https://github.com/metric-empire/export-me/releases) and install via:
+Download the latest release from the [Releases page](https://github.com/metric-empire/Export-ME/releases) and install via:
 - Drag and drop the .zip file into Blender, or
 - **Edit** → **Preferences** → **Get Extensions** → **Install from Disk**
 
