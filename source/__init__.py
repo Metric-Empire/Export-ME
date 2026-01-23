@@ -32,11 +32,27 @@ def get_project_enum_items(self, context):
     return items if items else [("0", "No Projects", "No projects available", 0)]
 
 
+def update_smoothing_on_project_change(self, context):
+    """Update smoothing setting when project selection changes"""
+    from .core.preferences import get_preferences, get_recommended_smoothing
+    
+    try:
+        selected_index = int(context.scene.selected_project_enum)
+        prefs = get_preferences(context)
+        
+        if selected_index < len(prefs.custom_project_paths):
+            project = prefs.custom_project_paths[selected_index]
+            context.scene.export_smoothing = get_recommended_smoothing(project.game_engine)
+    except (ValueError, AttributeError, IndexError):
+        pass
+
+
 SCENE_PROPERTIES: Dict[str, Any] = {
     "selected_project_enum": EnumProperty(
         name="Selected Project",
         description="Currently selected project",
         items=get_project_enum_items,
+        update=update_smoothing_on_project_change,
     ),
     "export_folder": StringProperty(
         name="Export folder",

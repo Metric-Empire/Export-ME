@@ -37,6 +37,16 @@ def get_game_engine_for_path(context: Context, export_path: Path) -> str:
     return "UNREAL"
 
 
+def get_recommended_smoothing(game_engine: str) -> str:
+    """Get the recommended smoothing setting for the target game engine"""
+    smoothing_map = {
+        "UNREAL": "FACE",
+        "UNITY": "OFF",
+        "GODOT": "FACE",
+    }
+    return smoothing_map.get(game_engine, "OFF")
+
+
 def add_recent_export_path(context: Context, export_path: str) -> None:
     """Add an export path to recent history, avoiding duplicates and respecting max limit"""
     prefs = get_preferences(context)
