@@ -5,6 +5,7 @@
 ## Overview
 
 Blender FBX Exporter Add-on to easily export assets directly in the game engine with automatic asset processing and validation.
+
 Addon web page: https://metric-empire.github.io/Export-ME/
 
 ## Installation
