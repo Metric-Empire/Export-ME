@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from bpy.types import Scene
@@ -23,9 +23,10 @@ class ExportSettings:
     black_vertex: bool
     export_animations: bool
     smoothing: str
+    game_engine: Literal["UNREAL", "UNITY", "GODOT"]
 
     @classmethod
-    def from_scene(cls, scene: Scene) -> ExportSettings:
+    def from_scene(cls, scene: Scene, game_engine: Literal["UNREAL", "UNITY", "GODOT"] = "UNREAL") -> ExportSettings:
         import bpy
 
         export_folder = scene.export_folder
@@ -48,6 +49,7 @@ class ExportSettings:
             black_vertex=scene.black_vertex,
             export_animations=scene.export_animations,
             smoothing=scene.export_smoothing,
+            game_engine=game_engine,
         )
 
 

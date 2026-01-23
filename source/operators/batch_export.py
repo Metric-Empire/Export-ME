@@ -1,8 +1,10 @@
 from typing import Set
 from bpy.types import Operator, Context, Object, Mesh
+from pathlib import Path
 
 from .export import FBXExporter
-from ..core.preferences import add_recent_export_path
+from ..core.preferences import add_recent_export_path, get_game_engine_for_path
+from ..core.types import ExportSettings
 
 
 IGNORED_UV_NAMES: Set[str] = {"Decal UVs", "UVMap", "Atlas UVs"}
@@ -33,7 +35,16 @@ class N_OT_BatchExport(Operator):
                 self.report({"WARNING"}, "Some objects have more than one UV set")
                 break
 
-        exporter = FBXExporter(context)
+        import bpy
+        export_folder_str = context.scene.export_folder
+        if export_folder_str.startswith("//"):
+            export_folder = Path(bpy.path.abspath(export_folder_str)).resolve()
+        else:
+            export_folder = Path(export_folder_str)
+        
+        game_engine = get_game_engine_for_path(context, export_folder)
+        
+        exporter = FBXExporter(context, game_engine)
         path = exporter.export()
 
         if path:

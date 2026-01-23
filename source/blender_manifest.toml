@@ -13,7 +13,7 @@ license = ["SPDX:GPL-3.0-or-later"]
 copyright = ["2026 Metric Empire"]
 
 [permissions]
-files = "Import/export FBX from/to disk"
+files = "Import/export FBX to disk"
 
 [build]
 paths_exclude_pattern = ["__pycache__/", "/.git/", "/*.zip"]

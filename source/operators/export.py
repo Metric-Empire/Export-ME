@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Literal, TYPE_CHECKING
+from typing import Dict, List, Optional, Literal, TYPE_CHECKING, Tuple
 import bpy
 import bmesh
 from pathlib import Path
@@ -19,10 +19,26 @@ class MaterialBackup:
     materials: List[bpy.types.Material] = field(default_factory=list)
 
 
+def get_engine_export_settings(engine: Literal["UNREAL", "UNITY", "GODOT"]) -> Tuple[str, str, bool]:
+    """
+    Returns (axis_forward, axis_up, apply_transform) for the given game engine.
+
+    Unreal Engine: Uses X forward, Z up, no transform baking
+    Unity: Uses Z forward, Y up, no transform baking
+    Godot: Uses -Z forward, Y up, with transform baking
+    """
+    settings = {
+        "UNREAL": ("X", "Z", False),
+        "UNITY": ("Z", "Y", False),
+        "GODOT": ("-Z", "Y", True),
+    }
+    return settings.get(engine, settings["UNREAL"])
+
+
 class FBXExporter:
-    def __init__(self, context: Context) -> None:
+    def __init__(self, context: Context, game_engine: Literal["UNREAL", "UNITY", "GODOT"] = "UNREAL") -> None:
         self.context = context
-        self.settings = ExportSettings.from_scene(context.scene)
+        self.settings = ExportSettings.from_scene(context.scene, game_engine)
         self.export_objects: List[Object] = list(context.selected_objects)
         self._material_backup = MaterialBackup()
 
@@ -173,6 +189,11 @@ class FBXExporter:
 
         smoothing: Literal["OFF", "FACE", "EDGE"] = self.settings.smoothing
 
+        axis_forward, axis_up, bake_space_transform = get_engine_export_settings(self.settings.game_engine)
+
+        if self.settings.apply_transform:
+            bake_space_transform = True
+
         bpy.ops.export_scene.fbx(
             check_existing=False,
             filepath=filepath.as_posix(),
@@ -183,12 +204,12 @@ class FBXExporter:
             bake_anim_use_all_bones=self.settings.export_animations,
             bake_anim_use_all_actions=self.settings.export_animations,
             use_armature_deform_only=True,
-            bake_space_transform=self.settings.apply_transform,
+            bake_space_transform=bake_space_transform,
             mesh_smooth_type=smoothing,
             add_leaf_bones=True,
             path_mode="ABSOLUTE",
-            axis_up="Z",
-            axis_forward="X",
+            axis_up=axis_up,
+            axis_forward=axis_forward,
         )
 
         return filepath

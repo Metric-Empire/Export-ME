@@ -1,5 +1,5 @@
 from .types import ExportSettings, ProjectPath
-from .preferences import get_preferences, get_custom_paths
+from .preferences import get_preferences, get_custom_paths, get_game_engine_for_path
 from .paths import resolve_export_path, get_children
 
 __all__ = [
@@ -7,6 +7,7 @@ __all__ = [
     "ProjectPath",
     "get_preferences",
     "get_custom_paths",
+    "get_game_engine_for_path",
     "resolve_export_path",
     "get_children",
 ]

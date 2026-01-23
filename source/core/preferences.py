@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Tuple
 import bpy
 from pathlib import Path
-from bpy.props import StringProperty, BoolProperty, CollectionProperty, IntProperty
+from bpy.props import StringProperty, BoolProperty, CollectionProperty, IntProperty, EnumProperty
 from bpy.types import PropertyGroup, AddonPreferences, Context
 
 from .. import __package__ as base_package
@@ -17,6 +17,24 @@ def get_preferences(context: Context) -> ExportMEPreferences:
 
 def get_custom_paths(context: Context) -> bpy.types.bpy_prop_collection:
     return get_preferences(context).custom_project_paths
+
+
+def get_game_engine_for_path(context: Context, export_path: Path) -> str:
+    """Get the game engine setting for the project containing the export path"""
+    prefs = get_preferences(context)
+    export_path_resolved = export_path.resolve()
+    
+    for project in prefs.custom_project_paths:
+        if not project.filepath:
+            continue
+        project_path = Path(project.filepath).resolve()
+        try:
+            export_path_resolved.relative_to(project_path)
+            return project.game_engine
+        except ValueError:
+            continue
+    
+    return "UNREAL"
 
 
 def add_recent_export_path(context: Context, export_path: str) -> None:
@@ -75,6 +93,16 @@ class CustomProjectPath(PropertyGroup):
         name="Project Name",
         description="Display name for this project",
     )
+    game_engine: EnumProperty(
+        name="Target Game Engine",
+        description="Select the target game engine for FBX export settings",
+        items=[
+            ("UNREAL", "Unreal Engine", "Unreal Engine 4/5 - Forward: X, Up: Z, Scale: 1.0"),
+            ("UNITY", "Unity", "Unity - Forward: Z, Up: Y, Scale: 1.0"),
+            ("GODOT", "Godot", "Godot - Forward: -Z, Up: Y, Scale: 1.0"),
+        ],
+        default="UNREAL",
+    )
     show_root_button: BoolProperty(
         name="Show Root Folder Button",
         description="Show the project root button in the N panel",
@@ -118,6 +146,7 @@ class ExportMEPreferences(AddonPreferences):
             row.operator("preferences.remove_custom_path", text="", icon="X").index = project_index
 
             box.prop(project, "filepath", text="Path")
+            box.prop(project, "game_engine", text="Game Engine")
             box.prop(project, "show_root_button", text="Show Root Folder Button")
 
             # Subpaths section
