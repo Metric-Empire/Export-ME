@@ -1,3 +1,5 @@
+[![GitHub latest release version](https://img.shields.io/github/v/release/Metric-Empire/Export-ME.svg?style=flat)](https://github.com/Metric-Empire/Export-ME/releases/latest)
+
 # Export ME Blender Add-on
 
 ***Add-on by the Metric Empire Studio***
