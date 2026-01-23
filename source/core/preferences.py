@@ -23,7 +23,7 @@ def get_game_engine_for_path(context: Context, export_path: Path) -> str:
     """Get the game engine setting for the project containing the export path"""
     prefs = get_preferences(context)
     export_path_resolved = export_path.resolve()
-    
+
     for project in prefs.custom_project_paths:
         if not project.filepath:
             continue
@@ -33,25 +33,29 @@ def get_game_engine_for_path(context: Context, export_path: Path) -> str:
             return project.game_engine
         except ValueError:
             continue
-    
+
     return "UNREAL"
 
 
 def add_recent_export_path(context: Context, export_path: str) -> None:
     """Add an export path to recent history, avoiding duplicates and respecting max limit"""
     prefs = get_preferences(context)
-    
+
+    # Skip if file history is disabled
+    if prefs.disable_file_history:
+        return
+
     # Remove duplicate if it exists
     for index, recent_path in enumerate(prefs.recent_export_paths):
         if recent_path.filepath == export_path:
             prefs.recent_export_paths.remove(index)
             break
-    
+
     # Add new path at the beginning
     new_recent = prefs.recent_export_paths.add()
     new_recent.filepath = export_path
     prefs.recent_export_paths.move(len(prefs.recent_export_paths) - 1, 0)
-    
+
     # Remove excess items beyond max_recent_paths
     while len(prefs.recent_export_paths) > prefs.max_recent_paths:
         prefs.recent_export_paths.remove(len(prefs.recent_export_paths) - 1)
@@ -127,6 +131,16 @@ class ExportMEPreferences(AddonPreferences):
         min=1,
         max=20,
     )
+    disable_file_history: BoolProperty(
+        name="Disable File History",
+        description="Disable tracking of recent export paths",
+        default=False,
+    )
+    hide_folder_navigation: BoolProperty(
+        name="Hide Folder Navigation",
+        description="Hide the folder navigation section in the N panel",
+        default=True,
+    )
 
     def draw(self, context: Context) -> None:
         layout = self.layout
@@ -181,21 +195,32 @@ class ExportMEPreferences(AddonPreferences):
             op = box.operator("preferences.add_project_subpath", text="Add Subpath", icon="ADD")
             op.project_index = project_index
 
+        # UI Options Section
+        layout.separator()
+        col = layout.column(align=True)
+        col.label(text="UI Options:")
+        col.prop(self, "hide_folder_navigation")
+
         # Recent Export Paths Section
         layout.separator()
         col = layout.column(align=True)
         col.label(text="Recent Export Paths:")
-        
+
+        col.prop(self, "disable_file_history")
+
         row = col.row(align=True)
+        row.enabled = not self.disable_file_history
         row.prop(self, "max_recent_paths", text="Max History")
         row.operator("preferences.clear_recent_paths", text="Clear History", icon="X")
-        
-        if self.recent_export_paths:
-            box = layout.box()
-            for index, recent_path in enumerate(self.recent_export_paths):
-                box.row().label(text=f"{index + 1}. {recent_path.filepath}", icon="FOLDER_REDIRECT")
-        else:
-            layout.label(text="No recent export paths", icon="INFO")
+
+        # Hide recent paths list if file history is disabled
+        if not self.disable_file_history:
+            if self.recent_export_paths:
+                box = layout.box()
+                for index, recent_path in enumerate(self.recent_export_paths):
+                    box.row().label(text=f"{index + 1}. {recent_path.filepath}", icon="FOLDER_REDIRECT")
+            else:
+                layout.label(text="No recent export paths", icon="INFO")
 
 
 class N_OT_AddCustomPath(bpy.types.Operator):

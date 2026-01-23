@@ -21,7 +21,9 @@ class N_PT_Panel(Panel):
 
         self._draw_projects_section(layout, prefs, context)
         self._draw_recent_paths_section(layout, prefs, context)
-        self._draw_folder_navigation(layout, context)
+        self._draw_export_path(layout, context)
+        if not prefs.hide_folder_navigation:
+            self._draw_folder_navigation(layout, context)
         self._draw_export_options(layout, context)
         self._draw_advanced_options(layout, context)
         self._draw_export_button(layout)
@@ -73,7 +75,8 @@ class N_PT_Panel(Panel):
         layout.separator()
 
     def _draw_recent_paths_section(self, layout: UILayout, prefs: ExportMEPreferences, context: Context) -> None:
-        if not prefs.recent_export_paths:
+        # Hide recent paths if file history is disabled
+        if prefs.disable_file_history or not prefs.recent_export_paths:
             return
 
         layout.label(text="Recent Export Paths:")
@@ -82,9 +85,10 @@ class N_PT_Panel(Panel):
 
         for index, recent_path in enumerate(prefs.recent_export_paths):
             from pathlib import Path
+
             path_obj = Path(recent_path.filepath)
             display_name = path_obj.name if path_obj.name else recent_path.filepath
-            
+
             op = col.operator(
                 "os.set_recent_path",
                 text=display_name,
@@ -94,12 +98,11 @@ class N_PT_Panel(Panel):
 
         layout.separator()
 
+    def _draw_export_path(self, layout: UILayout, context: Context) -> None:
+        layout.label(text="Export Folder:")
+        layout.prop(context.scene, "export_folder", text="")
+
     def _draw_folder_navigation(self, layout: UILayout, context: Context) -> None:
-        layout.label(text="Export folder:")
-
-        row = layout.row(align=True)
-        row.prop(context.scene, "export_folder", text="")
-
         directory = Path(context.scene.export_folder)
         parent_name = directory.parent.name
         current_name = directory.name
