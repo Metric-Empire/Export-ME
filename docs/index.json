@@ -7,7 +7,7 @@
       "id": "export_me",
       "name": "Export ME",
       "tagline": "Game FBX Exporter by the Metric Empire Studio",
-      "version": "2.3.0",
+      "version": "2.4.0",
       "type": "add-on",
       "maintainer": "Victor Chedeville <victor.ched@gmail.com>",
       "license": [
@@ -23,9 +23,9 @@
       "platforms": [
         "windows-x64"
       ],
-      "archive_url": "https://github.com/metric-empire/export-me/releases/download/v2.3.0/Export-ME-2.3.0.zip",
-      "archive_size": 15974,
-      "archive_hash": "sha256:db204c7e61d395dafb056525f43789d388ada17b207282f9f7f6e5422a524050"
+      "archive_url": "https://github.com/metric-empire/export-me/releases/download/v2.4.0/Export-ME-2.4.0.zip",
+      "archive_size": 17236,
+      "archive_hash": "sha256:6ac800aca8d41045329ddb87bbc652c03de071e75159ca1b85bff2835b15f86b"
     }
   ]
 }
